@@ -53,40 +53,39 @@ namespace NoTankControls
 		{
 			private static void Postfix(InteractionHandler __instance)
 			{
-				if (Config.GetValue(MOD_ENABLED))
+				if (!Config.GetValue(MOD_ENABLED) || __instance == null) return;
+    
+				if (Config.GetValue(INSPECTOR_SCROLL_COMPATIBILITY))
 				{
-					if (Config.GetValue(INSPECTOR_SCROLL_COMPATIBILITY))
+					if (__instance.World == Engine.Current.WorldManager.FocusedWorld)
 					{
-						if (__instance.World == Engine.Current.WorldManager.FocusedWorld)
+						if (ShouldBlock(__instance)
+							|| (__instance.Side == Chirality.Left && ShouldBlock(userSpaceHandlerLeft))
+							|| (__instance.Side == Chirality.Right && ShouldBlock(userSpaceHandlerRight)))
 						{
-							if (ShouldBlock(__instance)
-								|| (__instance.Side == Chirality.Left && ShouldBlock(userSpaceHandlerLeft))
-								|| (__instance.Side == Chirality.Right && ShouldBlock(userSpaceHandlerRight)))
+							__instance.Inputs.Axis.RegisterBlocks = true;
+							return;
+						}
+					}
+					else if (__instance.World == Userspace.UserspaceWorld)
+					{
+						if (__instance.Side == Chirality.Left)
+						{
+							if (userSpaceHandlerLeft.FilterWorldElement() == null)
 							{
-								__instance.Inputs.Axis.RegisterBlocks = true;
-								return;
+								userSpaceHandlerLeft = __instance;
 							}
 						}
-						else if (__instance.World == Userspace.UserspaceWorld)
+						else
 						{
-							if (__instance.Side == Chirality.Left)
+							if (userSpaceHandlerRight.FilterWorldElement() == null)
 							{
-								if (userSpaceHandlerLeft.FilterWorldElement() == null)
-								{
-									userSpaceHandlerLeft = __instance;
-								}
-							}
-							else
-							{
-								if (userSpaceHandlerRight.FilterWorldElement() == null)
-								{
-									userSpaceHandlerRight = __instance;
-								}
+								userSpaceHandlerRight = __instance;
 							}
 						}
 					}
-					__instance.Inputs.Axis.RegisterBlocks = false;
 				}
+				__instance.Inputs.Axis.RegisterBlocks = false;
 			}
 		}
 	}
